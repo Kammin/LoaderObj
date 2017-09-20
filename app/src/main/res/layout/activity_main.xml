@@ -13,4 +13,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="start" />
+
+    <Button
+        android:id="@+id/btFile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="File" />
+
+    <Button
+        android:id="@+id/btFile2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="File 2" />
 </LinearLayout>
