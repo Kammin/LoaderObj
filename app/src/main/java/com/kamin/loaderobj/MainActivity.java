@@ -1,6 +1,5 @@
 package com.kamin.loaderobj;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -10,7 +9,6 @@ import android.widget.Button;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,6 +21,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     Button btStart, btFile, btFile2;
+    FloatBuffer fb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         btFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                file();
+                file(fb, "VertexBuffer");
             }
         });
         btFile2.setOnClickListener(new View.OnClickListener() {
@@ -55,68 +54,49 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void file() {
-        File there = getFilesDir();
-        Log.d("File1 ", "path=" + getCacheDir().getAbsolutePath());
-        File newF = new File(getFilesDir()+File.separator+"newFile");
+    private void file(FloatBuffer floatBuffer, String fileName) {
+        File newF = new File(getFilesDir()+File.separator+fileName);
         Log.d("File1 ", " newF.exists = " + newF.exists());
-        Log.d("File1 ", "scan " + newF.getAbsolutePath());
-
-
-        File f = new File(getFilesDir()+File.separator+"newFile");
-        Log.d("File1 ", "f exist? " + f.exists());
-        try {
-            f.createNewFile();
-            Log.d("File1 ", "f exist? " + f.exists());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        String string = "Hello world!";
-        FileOutputStream outputStream;
-        try {
-            outputStream = openFileOutput("Hello", Context.MODE_PRIVATE);
-            outputStream.write(string.getBytes());
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
         try {
             RandomAccessFile aFile = new RandomAccessFile(newF, "rw");
-            float[] fa = new float[]{1f, 2f, 3f, 4f, 5f};
-            ByteBuffer byteBuffer = ByteBuffer.allocate(fa.length*4);
-            byteBuffer.asFloatBuffer().put(fa);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(floatBuffer.capacity()*4);
+            byteBuffer.asFloatBuffer().put(floatBuffer);
             FileChannel channel = aFile.getChannel();
             channel.write(byteBuffer);
             channel.close();
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        for (int i = 0; i < getFilesDir().listFiles().length; i++) {
+            Log.d("File1 ", "- " + getFilesDir().listFiles()[i].getAbsolutePath()+"  - " + getFilesDir().listFiles()[i].length());
+        }
+        Log.d("File1 ", "capacity " + LoadBuff(newF).capacity());
+    }
 
-        float[] fa2 = new float[5];
+    private FloatBuffer LoadBuff(File file) {
+        FloatBuffer result= FloatBuffer.allocate(0);
+
         try{
-            RandomAccessFile rFile = new RandomAccessFile(newF, "rw");
-            FileChannel inChannel = rFile.getChannel();
-            ByteBuffer buf_in = ByteBuffer.allocate(fa2.length*4);
-            inChannel.read(buf_in);
-            buf_in.rewind();
-            buf_in.asFloatBuffer().get(fa2);
-            inChannel.close();
+            RandomAccessFile rFile = new RandomAccessFile(file, "rw");
+            Log.d("File1 ", "path " + file.getAbsolutePath());
+            if(file.exists()){
+                FileChannel inChannel = rFile.getChannel();
+                Log.d("File1 ", "file.length() " + file.length());
+                ByteBuffer buf_in = ByteBuffer.allocate((int)file.length());
+                inChannel.read(buf_in);
+                buf_in.rewind();
+                result = buf_in.asFloatBuffer();
+                inChannel.close();
+            }
+            else
+                Log.d("File1 ", "not exist " + file.getAbsolutePath());
         }
         catch (IOException ex) {
             System.err.println(ex.getMessage());
         }
-        Log.d("File1 ", "- " + fa2[0]+" "+ fa2[1]+" "+ fa2[2]+" "+ fa2[3]+" "+ fa2[4]);
-
-        for (int i = 0; i < there.listFiles().length; i++) {
-            Log.d("File1 ", "- " + there.listFiles()[i].getName()+"  - " + there.listFiles()[i].length());
-        }
-
+        return result;
     }
 
     private void calc() {
@@ -167,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Log.d("COUNT ", "START V");
-        FloatBuffer fb = FloatBuffer.allocate(vList.size());
+        fb = FloatBuffer.allocate(vList.size());
         for (int i = 0; i < vList.size(); i++) {
             fb.put(i, Float.valueOf(vList.get(i)));
         }
